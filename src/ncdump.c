@@ -419,7 +419,14 @@ pr_att_valgs(
         ff = ((float *) vals)[iel];
         if (isfinite(ff)) {
           int res;
-          res = snprintf(gps, PRIM_LEN, float_att_fmt, ff);
+          const char* fmt;
+          /* Avoid trailing '.' with # flag in format specifier for JSON */
+          if (!is_json) {
+            fmt = float_att_fmt;
+          } else {
+            fmt = float_var_fmt;
+          }
+          res = snprintf(gps, PRIM_LEN, fmt, ff);
           assert(res < PRIM_LEN);
           if (!is_json) {
             tztrim(gps); /* trim trailing 0's after '.' */
@@ -444,7 +451,14 @@ pr_att_valgs(
         dd = ((double *) vals)[iel];
         if (isfinite(dd)) {
           int res;
-          res = snprintf(gps, PRIM_LEN, double_att_fmt, dd);
+          const char* fmt;
+          /* Avoid trailing '.' with # flag in format specifier for JSON */
+          if (!is_json) {
+            fmt = double_att_fmt;
+          } else {
+            fmt = double_var_fmt;
+          }
+          res = snprintf(gps, PRIM_LEN, fmt, dd);
           assert(res < PRIM_LEN);
           if (!is_json) {
             tztrim(gps); /* trim trailing 0's after '.' */
@@ -1810,16 +1824,15 @@ do_ncdump_rec(int ncid, const char *path, fspec_t* specp) {
       NC_CHECK(nc_inq_grpname(ncids[g], group_name));
       printf("\n");
       indent_out();
-      /* 	    printf ("group: %s {\n", group_name); */
-      printf("group: ");
+      printf("\"");
       print_name(group_name);
-      printf(" {\n");
+      printf("\": {\n");
       indent_more();
       do_ncdump_rec(ncids[g], NULL, specp);
       indent_out();
-      /* 	    printf ("} // group %s\n", group_name); */
-      printf("} // group ");
-      print_name(group_name);
+      printf("}");
+      if (g < (numgrps - 1))
+        printf(",");
       printf("\n");
       indent_less();
     }
